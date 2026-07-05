@@ -11,6 +11,8 @@ from app.database import engine
 from app.models import Base
 
 # change name
+# change folder name
+
 app=FastAPI()
 
 # Base.metadata.create_all(bind=engine)
