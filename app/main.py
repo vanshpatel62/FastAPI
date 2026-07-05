@@ -11,9 +11,7 @@ from app.database import engine
 from app.models import Base
 
 # change name
-# change folder name 
-# hvj
-# wdsd
+# change folder name
 
 app=FastAPI()
 
