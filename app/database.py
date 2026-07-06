@@ -18,6 +18,7 @@ def get_db():
     finally:
         db.close()
 
+
 class Base(DeclarativeBase):
     pass
 

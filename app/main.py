@@ -10,18 +10,26 @@ from typing import Union
 from app.database import engine
 from app.models import Base
 
-# change name
-# change folder name
 
 app=FastAPI()
 
 # Base.metadata.create_all(bind=engine)
 
 
-
+# Customer list
 @app.get("/cust",response_model=list[schemas.customer_data])
 def get_cust(db:Session=Depends(get_db)):
     return services.get_customre(db)
+
+# Search cudtomer with use id
+@app.get("/cust/{cust_id}",response_model=schemas.customer_data)
+def search_cust(cust_id:int,db:Session=Depends(get_db)):
+    return services.search_customer(cust_id,db)
+    
+# add customer
+@app.post("/cust",response_model=schemas.add_customre)
+def create_cust(cust:schemas.add_customre,db:Session=Depends(get_db)):
+    return services.create_customre(db,cust)
 
 
 @app.get("/products",response_model=list[schemas.produsts_data])
@@ -32,6 +40,14 @@ def get_produsts(db:Session=Depends(get_db)):
 @app.get("/orders",response_model=list[schemas.orders_data])
 def get_orders(db:Session=Depends(get_db)):
     return services.get_order(db)
+
+@app.get("/order_items",response_model=list[schemas.order_item])
+def get_order_items(db:Session=Depends(get_db)):
+    return services.get_order_items(db)
+
+@app.get("/peyment",response_model=list[schemas.payment])
+def get_payments(db:Session=Depends(get_db)):
+    return services.get_payments_details(db)
 
 
 @app.get("/")
@@ -147,8 +163,4 @@ def delete_tofo(todo_id:int):
             return {"Message":"Todo delete sucessfully",
                     "Deleted Data":d_data}
     return {"Error":"Todo not found"}
-
-
-
-
 
