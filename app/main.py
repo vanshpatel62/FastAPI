@@ -1,21 +1,40 @@
-from fastapi import FastAPI,HTTPException,Depends,Request
+from fastapi import FastAPI,HTTPException,Depends,Request,APIRouter
 # from fastapi.responses import HTMLResponse
 # from fastapi.staticfiles import StaticFiles
 # from fastapi.templating import Jinja2Templates
-from app import services,schemas,models
+from app import Services,Schemas,Models
 from app.database import get_db,engine
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Union
 from app.database import engine
-from app.models import Base
+# from app.models import Base
+from app.database import Base
+from app.Routers import customer,products,order,order_item,payment
+import logging
+
+# from app.Routers import customer
+# from app import Routers
 
 
 app=FastAPI()
+# router=APIRouter()
 
 # Base.metadata.create_all(bind=engine)
 
+app.include_router(customer.router)
 
+app.include_router(products.router)
+
+app.include_router(order.router)
+
+app.include_router(order_item.router)
+
+app.include_router(payment.router)
+
+
+
+"""
 # Customer list
 @app.get("/cust",response_model=list[schemas.customer_data])
 def get_cust(db:Session=Depends(get_db)):
@@ -195,3 +214,4 @@ def delete_tofo(todo_id:int):
                     "Deleted Data":d_data}
     return {"Error":"Todo not found"}
 
+"""
