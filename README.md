@@ -45,6 +45,7 @@ This project provides REST APIs for managing an e-commerce system.
 
 ```text
 app/
+├── __init__.py
 ├── database.py
 ├── main.py
 ├── middleware.py
