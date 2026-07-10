@@ -69,3 +69,15 @@ def user_login(data:Schemas.login,db:Session=Depends(get_db)):
             status_code=500,
             detail="Internal Server Error"
         )
+
+@router.delete("/delete_user/{user_id}",response_model=Schemas.get_user)
+def delete_user(user_id:int,db:Session=Depends(get_db)):
+    try:
+        logger.info(f"Delete Api calling for ID:  {user_id}")
+        return Services.delete_user(user_id,db)
+    except  HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Delete api for user is faild")
+        raise HTTPException(status_code=500,detail="Internal server error")
+    

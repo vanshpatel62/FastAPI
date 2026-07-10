@@ -2,17 +2,19 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
-from app import Schemas
-from app import Models
+from app import Schemas,Models
+from typing import cast
 from app.Models import User
-from sqlalchemy import Column, DateTime
 import logging
-from datetime import datetime,timezone
-import hashlib
+from app import security
+
+
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
 
 def get_details(db: Session):
     try:
@@ -32,14 +34,16 @@ def create_user(db: Session, user_info: Schemas.register_user):
     try:
         logger.info("Creating new user ")
 
-        hashed_pwd = hashlib.md5(
-            user_info.password.encode("utf-8")
-        ).hexdigest()
+        # hashed_pwd = hashlib.md5(
+        #     user_info.password.encode("utf-8")
+        # ).hexdigest()
+
+        user_info.password = security.hash_password(user_info.password)
 
         new_user = Models.User(
             user_name=user_info.user_name,
             mobile=user_info.mobile,
-            password=hashed_pwd,
+            password=user_info.password,
             role=user_info.role,
             last_log_in=user_info.last_log_in
         )
@@ -71,8 +75,7 @@ def user_login(db:Session,id_pass:Schemas.login):
     # hashed_pwd = hashlib.md5(id_pass.password.encode("utf-8")).hexdigest()
     try:
 
-        user_ = db.query(Models.User).filter(
-                Models.User.user_name == id_pass.user_name).first()
+        user_ = db.query(Models.User).filter_by(user_name = id_pass.user_name).first()
 
         if not user_:
             logger.warning(f"Login failed - user  {id_pass.user_name} is not found:")
@@ -81,11 +84,13 @@ def user_login(db:Session,id_pass:Schemas.login):
                 detail="Invalid user name  or password")
 
 
-        hashed_input_pwd = hashlib.md5(
-                id_pass.password.encode("utf-8")
-            ).hexdigest()
+        # hashed_input_pwd = hashlib.md5(
+        #         id_pass.password.encode("utf-8")
+        #     ).hexdigest()
 
-        if hashed_input_pwd != user_.password:
+
+
+        if not security.varify_password(id_pass.password,cast(str,user_.password)) :
             logger.warning(f"Login failed - wrong password for : {id_pass.user_name}")
             raise HTTPException(
                 status_code=401,
@@ -93,6 +98,7 @@ def user_login(db:Session,id_pass:Schemas.login):
         
         # user.last_log_in = datetime.utcnow()
         # user.last_log_in = datetime.now(timezone.utc)
+
         user_.last_log_in = datetime.now()  # type: ignore[assignment]
         db.commit()
         db.refresh(user_)
@@ -110,3 +116,34 @@ def user_login(db:Session,id_pass:Schemas.login):
             status_code=500,
             detail="Internal Server Error"
         )
+    
+def delete_user(user_id:int,db:Session):
+    try:
+
+        user=db.query(User).filter_by(user_id=user_id).first()
+
+        if user is None:
+                logger.warning("User not found with ID: %s", user_id)
+                raise HTTPException(
+                    status_code=404,
+                    detail="Customer not found"
+                )
+        
+        db.delete(user)
+        db.commit()
+
+        logger.info(
+                "Customer found | \n|ID: %s \n| Name: %s \n| Mobile: %s \n| Role: %s",
+                user.user_id,
+                user.user_name,
+                user.mobile,
+                user.role
+            )
+
+        return user
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Faild to fatch user")
+        raise HTTPException(status_code=500,detail="Faild to Delete user")
